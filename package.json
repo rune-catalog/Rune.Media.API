@@ -1,0 +1,30 @@
+{
+  "name": "media.api",
+  "version": "1.0.0",
+  "description": "Rune Media API",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rune-catalog/rune.media.api.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rune-catalog/rune.media.api/issues"
+  },
+  "homepage": "https://github.com/rune-catalog/rune.media.api#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-typescript": "^2.12.1",
+    "http": "0.0.0",
+    "typescript": "^1.8.9",
+    "typings": "^0.7.9"
+  },
+  "dependencies": {
+    "bunyan": "^1.8.0",
+    "restify": "^4.0.4"
+  }
+}
