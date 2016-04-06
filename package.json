@@ -24,7 +24,9 @@
     "typings": "^0.7.9"
   },
   "dependencies": {
+    "async": "^1.5.2",
     "bunyan": "^1.8.0",
+    "request": "^2.69.0",
     "restify": "^4.0.4"
   }
 }

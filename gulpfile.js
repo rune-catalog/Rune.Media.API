@@ -10,4 +10,4 @@ gulp.task('build', function() {
             .pipe(gulp.dest('./output'))
 });
 
-
+gulp.task('default', ['build']);
