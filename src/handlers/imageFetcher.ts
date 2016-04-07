@@ -2,18 +2,16 @@
 
 let async = require('async');
 let request = require('request');
+
+import Rx = require('rx');
 import fs = require('fs');
 import IImageFetcher from './IImageFetcher';
 
 const jpegRegExp: RegExp = /jpeg|jpg/i;
 const pngRegExp: RegExp = /png/i;
 
-interface IImageResult {
-    imageFilePath: string;
-    imageContentType: string;
-}
-
 export default class ImageFetcher implements IImageFetcher {
+    // TODO: Determine how/where to pass this in.
     static ImagePath: string = '/tmp/images/';
 
     private getFileInformation(path): fs.Stats {
@@ -47,17 +45,20 @@ export default class ImageFetcher implements IImageFetcher {
             : jpgPath;
     }
 
-    private fetchImageFromGatherer(multiverseId): void {
+    private fetchImageFromGatherer(multiverseId): Rx.Observable<void> {
+        let observable: Rx.ReplaySubject<void> = new Rx.ReplaySubject<void>();
+
         async.waterfall([
-            function(callback) {
+            (callback) => {
                 request(`http://gatherer.wizards.com/Handlers/image.ashx?multiverseid=${multiverseId}&type=card`,
                         { encoding: 'binary' },
-                    function(error, response, body) {
-                        callback(null, body, response.headers['content-type']);
-                    });
+                        (error, response, body) => {
+                            callback(null, body, response.headers['content-type']);
+                        }
+                );
             },
-            function(imageBytes, contentType, callback) {
-                let fileName = multiverseId;
+            (imageBytes, contentType, callback) => {
+                let fileName: string = multiverseId;
 
                 if (jpegRegExp.test(contentType)) {
                     fileName += '.png';
@@ -65,24 +66,39 @@ export default class ImageFetcher implements IImageFetcher {
                     fileName += '.jpg';
                 }
 
-                fs.writeFile(ImageFetcher.ImagePath + fileName, imageBytes, 'binary', function() {
-                    callback(null, fileName);
-                });
+                fs.writeFile(`${ImageFetcher.ImagePath}${fileName}`,
+                             imageBytes,
+                             'binary',
+                             () => {
+                                callback(null, fileName);
+                             }
+                );
             }
-        ], function(error, results) {
-            console.log('complete');
+        ], (error, results) => {
+            observable.onCompleted();
         });
+
+        return observable;
     }
 
-    fetchImage(multiverseId: string): string {
+    fetchImage(multiverseId: string): Rx.Observable<string> {
+        let returnSource: Rx.ReplaySubject<string> = new Rx.ReplaySubject<string>();
+
         let existingImagePath: string = this.getFilePath(multiverseId);
-        if (!existingImagePath) {
-            this.fetchImageFromGatherer(multiverseId);
-            existingImagePath = this.getFilePath(multiverseId);
+        if (existingImagePath) {
+            returnSource.onNext(existingImagePath);
+            returnSource.onCompleted();
+            return returnSource;
         }
-        
-        return !!existingImagePath
-            ? existingImagePath
-            : this.generateGenericImagePath();
+
+        let fetchSource = this.fetchImageFromGatherer(multiverseId);
+        fetchSource.subscribe(() => {}, () => {},
+            () => {
+                existingImagePath = this.getFilePath(multiverseId);
+                returnSource.onNext(existingImagePath);
+                returnSource.onCompleted();               
+            });
+
+        return returnSource;
     } 
 }
