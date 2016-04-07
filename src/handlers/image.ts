@@ -11,7 +11,6 @@ export default function imageHandler(request, response, next): void {
         = imageFetcher.fetchImage(request.params.multiverseid);
     
     imagePathSource.subscribe((imagePath: string): void => {
-        console.log('1');
         // TODO: Some type of caching needs to be put in place.
         let imgBytes = fs.readFileSync(imagePath);
         
@@ -21,11 +20,6 @@ export default function imageHandler(request, response, next): void {
         response.end(imgBytes);
         next();
     },
-    () => {
-        console.log('2');
-    },
-    () => {
-        console.log('3');
-    });
-
+    () => {},
+    () => {});
 }
